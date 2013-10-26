@@ -2,7 +2,6 @@ package gobotSphero
 
 import (
   "github.com/hybridgroup/gobot"
-  "time"
 )
 
 type packet struct {
@@ -27,7 +26,7 @@ func (sd *SpheroDriver) StartDriver() {
   f := func(){ 
   }
 
-  gobot.Every(100 * time.Millisecond, f)
+  gobot.Every(sd.Interval, f)
 }
 
 func (sd *SpheroDriver) Roll(speed uint8, heading uint16) {

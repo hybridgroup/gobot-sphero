@@ -1,9 +1,7 @@
 package main
-
 import (
   "github.com/hybridgroup/gobot"
-  "gobot-sphero"
-  "time"
+  "github.com/hybridgroup/gobot-sphero"
 )
 
 func main() {
@@ -25,8 +23,17 @@ func main() {
   }
 
   work := func(){
+
     sphero.Stop()
-    gobot.Every(1000 * time.Millisecond, func(){ sphero.Roll(100,100) })
+
+    gobot.Every("1s", func(){ 
+      sphero.Roll(100, uint16(gobot.Random(0, 360))) 
+    })
+
+    gobot.Every("0.5s", func(){ 
+      sphero.SetRGB(uint8(gobot.Random(0, 255)), uint8(gobot.Random(0, 255)), uint8(gobot.Random(0, 255))) 
+    })
+
   }
   
   robot := gobot.Robot{
