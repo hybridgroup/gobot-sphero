@@ -55,7 +55,7 @@ func (sd *SpheroDriver) SetRGB(r uint8, g uint8, b uint8) {
 func (sd *SpheroDriver) write(packet packet) {
   buf = append(packet.header, packet.body...)
   buf = append(buf, packet.checksum[0])
-  sd.SpheroAdaptor.Port.Write(append(packet.header, packet.body..., packet.checksum))
+  sd.SpheroAdaptor.Port.Write(buf)
   sd.seq += 1
 }
 
