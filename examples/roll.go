@@ -2,6 +2,7 @@ package main
 import (
   "github.com/hybridgroup/gobot"
   "github.com/hybridgroup/gobot-sphero"
+  "fmt"
 )
 
 func main() {
@@ -24,6 +25,13 @@ func main() {
   work := func(){
 
     sphero.Stop()
+
+    go func() {
+      for{
+        gobot.On(sphero.Events["Collision"])
+        fmt.Println("Collision Detected!")
+      }
+    }()    
 
     gobot.Every("1s", func(){ 
       sphero.Roll(100, uint16(gobot.Random(0, 360))) 

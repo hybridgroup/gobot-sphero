@@ -2,7 +2,6 @@ package gobotSphero
 
 import (
   "github.com/hybridgroup/gobot"
-  "fmt"
 )
 
 type packet struct {
@@ -20,6 +19,7 @@ type SpheroDriver struct {
 
 func NewSphero(sa *SpheroAdaptor) *SpheroDriver {
   s := new(SpheroDriver)
+  s.Events = make(map[string]chan interface{})
   s.SpheroAdaptor = sa
   return s
 }
@@ -60,6 +60,7 @@ func (sd *SpheroDriver) ConfigureCollisionDetection() {
   dlen := len(packet.body) + 1
   packet.header = []uint8{0xFF, 0xFF, 0x02, 0x12, sd.seq, uint8(dlen)}
   packet.checksum = sd.calculateChecksum(packet)
+  sd.Events["Collision"] = make(chan interface{}, 1024)
   sd.write(packet) 
 }
 
@@ -116,8 +117,7 @@ func (sd *SpheroDriver) handleMessageEvents() {
 }
 
 func (sd *SpheroDriver) handleCollisionDetected(data []uint8) {
-  //publish(event_topic_name("collision"), data)
-  fmt.Println("Collision")
+  sd.Events["Collision"] <- data
 }
 
 func (sd *SpheroDriver) readHeader() []uint8 {
