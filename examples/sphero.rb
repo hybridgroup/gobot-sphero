@@ -1,7 +1,7 @@
 package main
 import (
   "github.com/hybridgroup/gobot"
-  "github.com/hybridgroup/gobot-sphero"
+  "github.com/hybridgroup/gobot"
   "fmt"
 )
 
@@ -9,7 +9,7 @@ func main() {
 
   spheroAdaptor := new(gobotSphero.SpheroAdaptor)
   spheroAdaptor.Name = "Sphero"
-  spheroAdaptor.Port = "127.0.0.1:4567"
+  spheroAdaptor.Port = "127.0.0.1:4560"
 
   sphero := gobotSphero.NewSphero(spheroAdaptor)
   sphero.Name = "Sphero"
