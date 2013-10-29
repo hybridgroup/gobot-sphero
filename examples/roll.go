@@ -11,9 +11,8 @@ func main() {
   spheroAdaptor.Port = "127.0.0.1:4567"
 
   sphero := gobotSphero.NewSphero(spheroAdaptor)
-  sphero.Driver = gobot.Driver{
-    Name: "Sphero",
-  }
+  sphero.Name = "Sphero"
+  sphero.Interval = "0.1s"
 
   connections := []interface{} {
     spheroAdaptor,
