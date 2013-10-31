@@ -1,7 +1,7 @@
 package main
 import (
   "github.com/hybridgroup/gobot"
-  "github.com/hybridgroup/gobot"
+  "github.com/hybridgroup/gobot-sphero"
   "fmt"
 )
 
@@ -13,7 +13,6 @@ func main() {
 
   sphero := gobotSphero.NewSphero(spheroAdaptor)
   sphero.Name = "Sphero"
-  sphero.Interval = "0.1s"
 
   connections := []interface{} {
     spheroAdaptor,
@@ -32,15 +31,18 @@ func main() {
         fmt.Println("Collision Detected!")
       }
     }()    
-
-    gobot.Every("1s", func(){ 
-      sphero.Roll(100, uint16(gobot.Random(0, 360))) 
+    
+    gobot.Every("2s", func(){ 
+      dir := uint16(gobot.Random(0, 360))
+      sphero.Roll(100, dir) 
     })
 
-    gobot.Every("0.5s", func(){ 
-      sphero.SetRGB(uint8(gobot.Random(0, 255)), uint8(gobot.Random(0, 255)), uint8(gobot.Random(0, 255))) 
+    gobot.Every("3s", func(){ 
+      r := uint8(gobot.Random(0, 255))
+      g := uint8(gobot.Random(0, 255))
+      b := uint8(gobot.Random(0, 255))
+      sphero.SetRGB(r, g, b)
     })
-
   }
   
   robot := gobot.Robot{

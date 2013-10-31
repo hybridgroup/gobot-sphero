@@ -22,8 +22,8 @@ func main() {
     spheroAdaptor.Port = spheros[s]
 
     sphero := gobotSphero.NewSphero(spheroAdaptor)
-    sphero.Name = "Sphero"
-    sphero.Interval = "0.1s"
+    sphero.Name = "Sphero" + spheros[s]
+    sphero.Interval = "0.5s"
 
     work := func(){
       sphero.Stop()
@@ -31,15 +31,14 @@ func main() {
       go func() {
         for{
           gobot.On(sphero.Events["Collision"])
-          fmt.Println("Collision Detected!")
+          fmt.Println("Collision Detected", sphero.Name)
         }
       }()    
 
       gobot.Every("1s", func() { 
         sphero.Roll(100, uint16(gobot.Random(0, 360))) 
       })
-
-      gobot.Every("0.5s", func() { 
+      gobot.Every("3s", func() { 
         sphero.SetRGB(uint8(gobot.Random(0, 255)), uint8(gobot.Random(0, 255)), uint8(gobot.Random(0, 255))) 
       })
     }

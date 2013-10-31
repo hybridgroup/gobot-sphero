@@ -11,8 +11,9 @@ type SpheroAdaptor struct {
 }
 
 func (sa *SpheroAdaptor) Connect() {
-  sa.TcpPort, _ = net.Dial("tcp", sa.Adaptor.Port)
+  sa.TcpPort = gobot.ConnectTo(sa.Adaptor.Port)
 }
 
 func (sa *SpheroAdaptor) Disconnect() {
+  sa.TcpPort.Close()
 }

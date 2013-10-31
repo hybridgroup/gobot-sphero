@@ -2,6 +2,7 @@ package gobotSphero
 
 import (
   "github.com/hybridgroup/gobot"
+  "fmt"
 )
 
 type packet struct {
@@ -56,22 +57,31 @@ func (sd *SpheroDriver) SetRGB(r uint8, g uint8, b uint8) {
 
 func (sd *SpheroDriver) ConfigureCollisionDetection() {
   packet := new(packet)
-  packet.body = []uint8{0x01, 0x20, 0x20, 0x20, 0x20, 0x50}
+  packet.body = []uint8{0x01, 0x40, 0x40, 0x50, 0x50, 0x50}
   dlen := len(packet.body) + 1
   packet.header = []uint8{0xFF, 0xFF, 0x02, 0x12, sd.seq, uint8(dlen)}
   packet.checksum = sd.calculateChecksum(packet)
-  sd.Events["Collision"] = make(chan interface{}, 1024)
+  sd.Events["Collision"] = make(chan interface{})
   sd.write(packet) 
 }
 
 func (sd *SpheroDriver) write(packet *packet) []uint8 {
+  var header []uint8
+  var body []uint8
   buf := append(packet.header, packet.body...)
   buf = append(buf, packet.checksum)
-  sd.SpheroAdaptor.TcpPort.Write(buf)
+  length, err := sd.SpheroAdaptor.TcpPort.Write(buf)
+  if err != nil {
+    fmt.Println(sd.Name, err)
+    sd.SpheroAdaptor.Disconnect()
+    sd.SpheroAdaptor.Connect()
+    return nil
+  } else if length != len(buf) {
+    fmt.Println("Not enough bytes written", sd.Name)
+  }
   sd.seq += 1
 
-  header := sd.readHeader()
-  var body []uint8
+  header = sd.readHeader()
   if header != nil {
     body = sd.readBody(header[len(header)-1])
   }
@@ -88,11 +98,11 @@ func (sd *SpheroDriver) write(packet *packet) []uint8 {
     }
   }
 
-  if header[2] == 0 {
+  if len(header) != 0 && header[2] == 0 {
     return append(header, body...)
   } else {
-    return make([]uint8, 0)
-  //  //raise "Unable to write to Sphero!"
+    fmt.Println("Unable to write to Sphero!", sd.Name)
+    return nil
   }
 }
 
@@ -121,8 +131,9 @@ func (sd *SpheroDriver) handleCollisionDetected(data []uint8) {
 }
 
 func (sd *SpheroDriver) readHeader() []uint8 {
-  data := sd.readNextChunk(5)
-  if data == nil {
+  headerLen := uint8(5)
+  data := sd.readNextChunk(headerLen)
+  if data == nil || uint8(len(data)) != headerLen {
     return nil
   } else {
     return data
@@ -140,6 +151,9 @@ func (sd *SpheroDriver) readBody(length uint8) []uint8 {
 
 func (sd *SpheroDriver) readNextChunk(length uint8) []uint8 {
   var read = make([]uint8, int(length))
-  sd.SpheroAdaptor.TcpPort.Read(read[:])
+  _, err := sd.SpheroAdaptor.TcpPort.Read(read[:])
+  if err != nil {
+    return nil
+  }
   return read
 }
