@@ -75,7 +75,7 @@ func (sd *SpheroDriver) write(packet *packet) []uint8 {
 	var body []uint8
 	buf := append(packet.header, packet.body...)
 	buf = append(buf, packet.checksum)
-	length, err := sd.SpheroAdaptor.TcpPort.Write(buf)
+	length, err := sd.SpheroAdaptor.sp.Write(buf)
 	if err != nil {
 		fmt.Println(sd.Name, err)
 		sd.SpheroAdaptor.Disconnect()
@@ -156,7 +156,7 @@ func (sd *SpheroDriver) readBody(length uint8) []uint8 {
 
 func (sd *SpheroDriver) readNextChunk(length uint8) []uint8 {
 	var read = make([]uint8, int(length))
-	l, err := sd.SpheroAdaptor.TcpPort.Read(read[:])
+	l, err := sd.SpheroAdaptor.sp.Read(read[:])
 	if err != nil || length != uint8(l) {
 		return nil
 	} else {
