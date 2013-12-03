@@ -1,19 +1,22 @@
 package gobotSphero
 
 import (
-  "github.com/hybridgroup/gobot"
-  "net"
+	"github.com/hybridgroup/gobot"
 )
 
 type SpheroAdaptor struct {
-  gobot.Adaptor
-  TcpPort net.Conn
+	gobot.Adaptor
+	sp gobot.Port
 }
 
 func (sa *SpheroAdaptor) Connect() {
-  sa.TcpPort = gobot.ConnectTo(sa.Adaptor.Port)
+	if gobot.IsUrl(sa.Adaptor.Port) {
+		sa.sp = gobot.ConnectToTcp(sa.Adaptor.Port)
+	} else {
+		sa.sp = gobot.ConnectToSerial(sa.Adaptor.Port, 115200)
+	}
 }
 
 func (sa *SpheroAdaptor) Disconnect() {
-  sa.TcpPort.Close()
+	sa.sp.Close()
 }
