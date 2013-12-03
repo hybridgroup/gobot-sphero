@@ -23,9 +23,9 @@ func NewSphero(sa *SpheroAdaptor) *SpheroDriver {
 	s.Events = make(map[string]chan interface{})
 	s.SpheroAdaptor = sa
 	s.Commands = []string{
-		"SetRGBApi",
-		"RollApi",
-		"StopApi",
+		"SetRGBC",
+		"RollC",
+		"StopC",
 	}
 	return s
 }
