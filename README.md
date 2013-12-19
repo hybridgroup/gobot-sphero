@@ -27,10 +27,10 @@ func main() {
   sphero := gobotSphero.NewSphero(spheroAdaptor)
   sphero.Name = "Sphero"
 
-  connections := []interface{} {
+  connections := []gobot.Connection {
     spheroAdaptor,
   }
-  devices := []interface{} {
+  devices := []gobot.Device {
     sphero,
   }
 
