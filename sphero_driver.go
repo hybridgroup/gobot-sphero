@@ -30,12 +30,13 @@ func NewSphero(sa *SpheroAdaptor) *SpheroDriver {
 	return s
 }
 
-func (sd *SpheroDriver) StartDriver() {
+func (sd *SpheroDriver) Start() bool {
 	sd.ConfigureCollisionDetection()
 
 	gobot.Every(sd.Interval, func() {
 		sd.handleMessageEvents()
 	})
+	return true
 }
 
 func (sd *SpheroDriver) Roll(speed uint8, heading uint16) {
