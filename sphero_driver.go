@@ -26,6 +26,10 @@ func NewSphero(sa *SpheroAdaptor) *SpheroDriver {
 		"SetRGBC",
 		"RollC",
 		"StopC",
+		"GetRGBC",
+		"SetBackLEDC",
+		"SetHeadingC",
+		"SetStabilizationC",
 	}
 	return s
 }
@@ -39,13 +43,28 @@ func (sd *SpheroDriver) Start() bool {
 	return true
 }
 
+func (sd *SpheroDriver) GetRGB() []uint8 {
+	return sd.write(sd.craftPacket([]uint8{}, 0x22))
+}
+
+func (sd *SpheroDriver) SetBackLED(level uint8) {
+	sd.write(sd.craftPacket([]uint8{level}, 0x21))
+}
+
+func (sd *SpheroDriver) SetHeading(heading uint16) {
+	sd.write(sd.craftPacket([]uint8{uint8(heading >> 8), uint8(heading & 0xFF)}, 0x01))
+}
+
+func (sd *SpheroDriver) SetStabilization(on bool) {
+	b := uint8(0x01)
+	if on == false {
+		b = 0x00
+	}
+	sd.write(sd.craftPacket([]uint8{b}, 0x02))
+}
+
 func (sd *SpheroDriver) Roll(speed uint8, heading uint16) {
-	packet := new(packet)
-	packet.body = []uint8{speed, uint8(heading >> 8), uint8(heading & 0xFF), 0x01}
-	dlen := len(packet.body) + 1
-	packet.header = []uint8{0xFF, 0xFF, 0x02, 0x30, sd.seq, uint8(dlen)}
-	packet.checksum = sd.calculateChecksum(packet)
-	sd.write(packet)
+	sd.write(sd.craftPacket([]uint8{speed, uint8(heading >> 8), uint8(heading & 0xFF), 0x01}, 0x30))
 }
 
 func (sd *SpheroDriver) Stop() {
@@ -53,22 +72,21 @@ func (sd *SpheroDriver) Stop() {
 }
 
 func (sd *SpheroDriver) SetRGB(r uint8, g uint8, b uint8) {
-	packet := new(packet)
-	packet.body = []uint8{r, g, b, 0x01}
-	dlen := len(packet.body) + 1
-	packet.header = []uint8{0xFF, 0xFF, 0x02, 0x20, sd.seq, uint8(dlen)}
-	packet.checksum = sd.calculateChecksum(packet)
-	sd.write(packet)
+	sd.write(sd.craftPacket([]uint8{r, g, b, 0x01}, 0x20))
 }
 
 func (sd *SpheroDriver) ConfigureCollisionDetection() {
-	packet := new(packet)
-	packet.body = []uint8{0x01, 0x40, 0x40, 0x50, 0x50, 0x60}
-	dlen := len(packet.body) + 1
-	packet.header = []uint8{0xFF, 0xFF, 0x02, 0x12, sd.seq, uint8(dlen)}
-	packet.checksum = sd.calculateChecksum(packet)
 	sd.Events["Collision"] = make(chan interface{})
-	sd.write(packet)
+	sd.write(sd.craftPacket([]uint8{0x01, 0x40, 0x40, 0x50, 0x50, 0x60}, 0x12))
+}
+
+func (sd *SpheroDriver) craftPacket(body []uint8, cid byte) *packet {
+	packet := new(packet)
+	packet.body = body
+	dlen := len(packet.body) + 1
+	packet.header = []uint8{0xFF, 0xFF, 0x02, cid, sd.seq, uint8(dlen)}
+	packet.checksum = sd.calculateChecksum(packet)
+	return packet
 }
 
 func (sd *SpheroDriver) write(packet *packet) []uint8 {

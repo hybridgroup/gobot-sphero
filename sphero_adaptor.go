@@ -31,4 +31,7 @@ func (sa *SpheroAdaptor) Disconnect() bool {
 	sa.Connected = false
 	return true
 }
-func (sa *SpheroAdaptor) Finalize() bool { return true }
+
+func (sa *SpheroAdaptor) Finalize() bool {
+	return true
+}

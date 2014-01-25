@@ -16,3 +16,20 @@ func (sd *SpheroDriver) RollC(params map[string]interface{}) {
 func (sd *SpheroDriver) StopC() {
 	sd.Stop()
 }
+
+func (sd *SpheroDriver) GetRGBC() {
+}
+
+func (sd *SpheroDriver) SetBackLEDC(params map[string]interface{}) {
+	level := uint8(params["level"].(float64))
+	sd.SetBackLED(level)
+}
+
+func (sd *SpheroDriver) SetHeadingC(params map[string]interface{}) {
+	heading := uint16(params["heading"].(float64))
+	sd.SetHeading(heading)
+}
+func (sd *SpheroDriver) SetStabilizationC(params map[string]interface{}) {
+	on := params["heading"].(bool)
+	sd.SetStabilization(on)
+}
