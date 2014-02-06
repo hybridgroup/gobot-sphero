@@ -43,6 +43,20 @@ func (sd *SpheroDriver) Start() bool {
 	return true
 }
 
+func (sd *SpheroDriver) handleMessageEvents() {
+	var evt []uint8
+	for len(sd.messages) != 0 {
+		evt, sd.messages = sd.messages[len(sd.messages)-1], sd.messages[:len(sd.messages)-1]
+		if evt[2] == 0x07 {
+			sd.handleCollisionDetected(evt)
+		}
+	}
+}
+
+func (sd *SpheroDriver) handleCollisionDetected(data []uint8) {
+	gobot.Publish(sd.Events["Collision"], data)
+}
+
 func (sd *SpheroDriver) GetRGB() []uint8 {
 	return sd.write(sd.craftPacket([]uint8{}, 0x22))
 }
@@ -138,21 +152,6 @@ func (sd *SpheroDriver) calculateChecksum(packet *packet) uint8 {
 		calculatedChecksum += uint16(buf[i])
 	}
 	return uint8(^(calculatedChecksum % 256))
-}
-
-func (sd *SpheroDriver) handleMessageEvents() {
-	var evt []uint8
-	for len(sd.messages) != 0 {
-		evt, sd.messages = sd.messages[len(sd.messages)-1], sd.messages[:len(sd.messages)-1]
-		if evt[2] == 0x07 {
-			fmt.Println(sd.Name, evt)
-			sd.handleCollisionDetected(evt)
-		}
-	}
-}
-
-func (sd *SpheroDriver) handleCollisionDetected(data []uint8) {
-	sd.Events["Collision"] <- data
 }
 
 func (sd *SpheroDriver) readHeader() []uint8 {
