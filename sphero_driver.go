@@ -3,6 +3,7 @@ package gobotSphero
 import (
 	"fmt"
 	"github.com/hybridgroup/gobot"
+	"time"
 )
 
 type packet struct {
@@ -13,15 +14,20 @@ type packet struct {
 
 type SpheroDriver struct {
 	gobot.Driver
-	SpheroAdaptor *SpheroAdaptor
-	seq           uint8
-	messages      [][]uint8
+	SpheroAdaptor    *SpheroAdaptor
+	seq              uint8
+	async_response   [][]uint8
+	sync_response    [][]uint8
+	packet_channel   chan *packet
+	response_channel chan []uint8
 }
 
 func NewSphero(sa *SpheroAdaptor) *SpheroDriver {
 	s := new(SpheroDriver)
 	s.Events = make(map[string]chan interface{})
 	s.SpheroAdaptor = sa
+	s.packet_channel = make(chan *packet, 1024)
+	s.response_channel = make(chan []uint8, 1024)
 	s.Commands = []string{
 		"SetRGBC",
 		"RollC",
@@ -35,6 +41,20 @@ func NewSphero(sa *SpheroAdaptor) *SpheroDriver {
 }
 
 func (sd *SpheroDriver) Start() bool {
+	go func() {
+		for {
+			packet := <-sd.packet_channel
+			sd.write(packet)
+		}
+	}()
+
+	go func() {
+		for {
+			response := <-sd.response_channel
+			sd.sync_response = append(sd.sync_response, response)
+		}
+	}()
+
 	sd.ConfigureCollisionDetection()
 
 	gobot.Every(sd.Interval, func() {
@@ -45,8 +65,8 @@ func (sd *SpheroDriver) Start() bool {
 
 func (sd *SpheroDriver) handleMessageEvents() {
 	var evt []uint8
-	for len(sd.messages) != 0 {
-		evt, sd.messages = sd.messages[len(sd.messages)-1], sd.messages[:len(sd.messages)-1]
+	for len(sd.async_response) != 0 {
+		evt, sd.async_response = sd.async_response[len(sd.async_response)-1], sd.async_response[:len(sd.async_response)-1]
 		if evt[2] == 0x07 {
 			sd.handleCollisionDetected(evt)
 		}
@@ -58,15 +78,15 @@ func (sd *SpheroDriver) handleCollisionDetected(data []uint8) {
 }
 
 func (sd *SpheroDriver) GetRGB() []uint8 {
-	return sd.write(sd.craftPacket([]uint8{}, 0x22))
+	return sd.syncResponse(sd.craftPacket([]uint8{}, 0x22))
 }
 
 func (sd *SpheroDriver) SetBackLED(level uint8) {
-	sd.write(sd.craftPacket([]uint8{level}, 0x21))
+	sd.packet_channel <- sd.craftPacket([]uint8{level}, 0x21)
 }
 
 func (sd *SpheroDriver) SetHeading(heading uint16) {
-	sd.write(sd.craftPacket([]uint8{uint8(heading >> 8), uint8(heading & 0xFF)}, 0x01))
+	sd.packet_channel <- sd.craftPacket([]uint8{uint8(heading >> 8), uint8(heading & 0xFF)}, 0x01)
 }
 
 func (sd *SpheroDriver) SetStabilization(on bool) {
@@ -74,11 +94,11 @@ func (sd *SpheroDriver) SetStabilization(on bool) {
 	if on == false {
 		b = 0x00
 	}
-	sd.write(sd.craftPacket([]uint8{b}, 0x02))
+	sd.packet_channel <- sd.craftPacket([]uint8{b}, 0x02)
 }
 
 func (sd *SpheroDriver) Roll(speed uint8, heading uint16) {
-	sd.write(sd.craftPacket([]uint8{speed, uint8(heading >> 8), uint8(heading & 0xFF), 0x01}, 0x30))
+	sd.packet_channel <- sd.craftPacket([]uint8{speed, uint8(heading >> 8), uint8(heading & 0xFF), 0x01}, 0x30)
 }
 
 func (sd *SpheroDriver) Stop() {
@@ -86,12 +106,29 @@ func (sd *SpheroDriver) Stop() {
 }
 
 func (sd *SpheroDriver) SetRGB(r uint8, g uint8, b uint8) {
-	sd.write(sd.craftPacket([]uint8{r, g, b, 0x01}, 0x20))
+	sd.packet_channel <- sd.craftPacket([]uint8{r, g, b, 0x01}, 0x20)
 }
 
 func (sd *SpheroDriver) ConfigureCollisionDetection() {
 	sd.Events["Collision"] = make(chan interface{})
-	sd.write(sd.craftPacket([]uint8{0x01, 0x40, 0x40, 0x50, 0x50, 0x60}, 0x12))
+	sd.packet_channel <- sd.craftPacket([]uint8{0x01, 0x40, 0x40, 0x50, 0x50, 0x60}, 0x12)
+}
+
+func (sd *SpheroDriver) syncResponse(packet *packet) []byte {
+	sd.packet_channel <- packet
+	for i := 0; i < 100; i++ {
+		for key := range sd.sync_response {
+			//fmt.Println("sd.sync_response[key]", sd.sync_response[key])
+			if sd.sync_response[key][3] == packet.header[4] {
+				var response []byte
+				response, sd.sync_response = sd.sync_response[len(sd.sync_response)-1], sd.sync_response[:len(sd.sync_response)-1]
+				return response
+			}
+		}
+		time.Sleep(10 * time.Microsecond)
+	}
+
+	return make([]byte, 0)
 }
 
 func (sd *SpheroDriver) craftPacket(body []uint8, cid byte) *packet {
@@ -103,7 +140,7 @@ func (sd *SpheroDriver) craftPacket(body []uint8, cid byte) *packet {
 	return packet
 }
 
-func (sd *SpheroDriver) write(packet *packet) []uint8 {
+func (sd *SpheroDriver) write(packet *packet) {
 	var header []uint8
 	var body []uint8
 	buf := append(packet.header, packet.body...)
@@ -112,8 +149,9 @@ func (sd *SpheroDriver) write(packet *packet) []uint8 {
 	if err != nil {
 		fmt.Println(sd.Name, err)
 		sd.SpheroAdaptor.Disconnect()
+		fmt.Println("Reconnecting to sphero...")
 		sd.SpheroAdaptor.Connect()
-		return nil
+		return
 	} else if length != len(buf) {
 		fmt.Println("Not enough bytes written", sd.Name)
 	}
@@ -126,9 +164,9 @@ func (sd *SpheroDriver) write(packet *packet) []uint8 {
 
 	for header != nil && header[1] == 0xFE {
 		async := append(header, body...)
-		sd.messages = append(sd.messages, async)
+		sd.async_response = append(sd.async_response, async)
 
-		header := sd.readHeader()
+		header = sd.readHeader()
 		if header != nil {
 			body = sd.readBody(header[4])
 		} else {
@@ -137,11 +175,10 @@ func (sd *SpheroDriver) write(packet *packet) []uint8 {
 	}
 
 	if len(header) != 0 && header[2] == 0 {
-		return append(header, body...)
-	} else {
-		fmt.Println("Unable to write to Sphero!", sd.Name)
-		return nil
-	}
+		sd.response_channel <- append(header, body...)
+	} //else {
+	//fmt.Println("Unable to write to Sphero!", sd.Name)
+	//}
 }
 
 func (sd *SpheroDriver) calculateChecksum(packet *packet) uint8 {
@@ -173,6 +210,7 @@ func (sd *SpheroDriver) readBody(length uint8) []uint8 {
 }
 
 func (sd *SpheroDriver) readNextChunk(length uint8) []uint8 {
+	time.Sleep(1000 * time.Microsecond)
 	var read = make([]uint8, int(length))
 	l, err := sd.SpheroAdaptor.sp.Read(read[:])
 	if err != nil || length != uint8(l) {

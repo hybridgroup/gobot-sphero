@@ -20,12 +20,11 @@ func main() {
 			fmt.Println("Collision Detected!")
 		})
 
-		gobot.Every("2s", func() {
-			dir := uint16(gobot.Rand(360))
-			sphero.Roll(100, dir)
+		gobot.Every("3s", func() {
+			sphero.Roll(30, uint16(gobot.Rand(360)))
 		})
 
-		gobot.Every("3s", func() {
+		gobot.Every("1s", func() {
 			r := uint8(gobot.Rand(255))
 			g := uint8(gobot.Rand(255))
 			b := uint8(gobot.Rand(255))
