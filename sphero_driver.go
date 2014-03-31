@@ -39,6 +39,9 @@ func NewSphero(sa *SpheroAdaptor) *SpheroDriver {
 	}
 	return s
 }
+func (sd *SpheroDriver) Init() bool {
+	return true
+}
 
 func (sd *SpheroDriver) Start() bool {
 	go func() {
@@ -60,6 +63,16 @@ func (sd *SpheroDriver) Start() bool {
 	gobot.Every(sd.Interval, func() {
 		sd.handleMessageEvents()
 	})
+	return true
+}
+
+func (sd *SpheroDriver) Halt() bool {
+	go func() {
+		for {
+			sd.Stop()
+		}
+	}()
+	time.Sleep(1 * time.Second)
 	return true
 }
 
