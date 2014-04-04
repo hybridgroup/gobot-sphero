@@ -86,7 +86,7 @@ func (sd *SpheroDriver) Start() bool {
 		}
 	}()
 
-	sd.ConfigureCollisionDetection()
+	sd.configureCollisionDetection()
 
 	return true
 }
@@ -101,8 +101,8 @@ func (sd *SpheroDriver) Halt() bool {
 	return true
 }
 
-func (sd *SpheroDriver) handleCollisionDetected(data []uint8) {
-	gobot.Publish(sd.Events["Collision"], data)
+func (sd *SpheroDriver) SetRGB(r uint8, g uint8, b uint8) {
+	sd.packet_channel <- sd.craftPacket([]uint8{r, g, b, 0x01}, 0x20)
 }
 
 func (sd *SpheroDriver) GetRGB() []uint8 {
@@ -133,13 +133,13 @@ func (sd *SpheroDriver) Stop() {
 	sd.Roll(0, 0)
 }
 
-func (sd *SpheroDriver) SetRGB(r uint8, g uint8, b uint8) {
-	sd.packet_channel <- sd.craftPacket([]uint8{r, g, b, 0x01}, 0x20)
-}
-
-func (sd *SpheroDriver) ConfigureCollisionDetection() {
+func (sd *SpheroDriver) configureCollisionDetection() {
 	sd.Events["Collision"] = make(chan interface{})
 	sd.packet_channel <- sd.craftPacket([]uint8{0x01, 0x40, 0x40, 0x50, 0x50, 0x60}, 0x12)
+}
+
+func (sd *SpheroDriver) handleCollisionDetected(data []uint8) {
+	gobot.Publish(sd.Events["Collision"], data)
 }
 
 func (sd *SpheroDriver) syncResponse(packet *packet) []byte {
