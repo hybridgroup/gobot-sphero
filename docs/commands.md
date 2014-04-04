@@ -46,6 +46,7 @@ Sets the sphero's LED color
 - **r** - **uint8** - Red
 - **g** - **uint8** - Green
 - **b** - **uintu** - Blue
+
 #### API Command
 
 **SetRGBC**
