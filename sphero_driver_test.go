@@ -7,20 +7,23 @@ import (
 
 var _ = Describe("SpheroDriver", func() {
 	var (
-		driver *SpheroDriver
+		driver  *SpheroDriver
+		adaptor *SpheroAdaptor
 	)
 
 	BeforeEach(func() {
-		driver = NewSphero(new(SpheroAdaptor))
+		adaptor = new(SpheroAdaptor)
+		adaptor.sp = sp{}
+		driver = NewSphero(adaptor)
 	})
 
-	PIt("Must be able to Start", func() {
+	It("Must be able to Start", func() {
 		Expect(driver.Start()).To(Equal(true))
 	})
-	PIt("Must be able to Init", func() {
+	It("Must be able to Init", func() {
 		Expect(driver.Init()).To(Equal(true))
 	})
-	PIt("Must be able to Halt", func() {
+	It("Must be able to Halt", func() {
 		Expect(driver.Halt()).To(Equal(true))
 	})
 })

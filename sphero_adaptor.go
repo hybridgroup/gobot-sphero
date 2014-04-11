@@ -9,12 +9,16 @@ type SpheroAdaptor struct {
 	sp gobot.Port
 }
 
-func (sa *SpheroAdaptor) Connect() bool {
+var connect = func(sa *SpheroAdaptor) {
 	if gobot.IsUrl(sa.Adaptor.Port) {
 		sa.sp = gobot.ConnectToTcp(sa.Adaptor.Port)
 	} else {
 		sa.sp = gobot.ConnectToSerial(sa.Adaptor.Port, 115200)
 	}
+}
+
+func (sa *SpheroAdaptor) Connect() bool {
+	connect(sa)
 	sa.Connected = true
 	return true
 }
