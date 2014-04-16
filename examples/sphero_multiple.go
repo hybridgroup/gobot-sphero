@@ -7,13 +7,14 @@ import (
 )
 
 func main() {
+	master := gobot.GobotMaster()
 
 	var robots []gobot.Robot
 	spheros := []string{
-		"127.0.0.1:4560",
-		"127.0.0.1:4561",
-		"127.0.0.1:4562",
-		"127.0.0.1:4563",
+		"/dev/rfcomm0",
+		"/dev/rfcomm1",
+		"/dev/rfcomm2",
+		"/dev/rfcomm3",
 	}
 
 	for s := range spheros {
@@ -40,8 +41,12 @@ func main() {
 			})
 		}
 
-		robots = append(robots, gobot.Robot{Connections: []interface{}{spheroAdaptor}, Devices: []interface{}{sphero}, Work: work})
+		master.Robots = append(robots, *gobot.Robot{
+			Connections: []gobot.Connection{spheroAdaptor},
+			Devices:     []gobot.Device{sphero},
+			Work:        work,
+		})
 	}
 
-	gobot.Work(robots)
+	master.Start()
 }

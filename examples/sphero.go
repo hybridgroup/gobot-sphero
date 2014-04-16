@@ -7,7 +7,6 @@ import (
 )
 
 func main() {
-
 	spheroAdaptor := new(gobotSphero.SpheroAdaptor)
 	spheroAdaptor.Name = "Sphero"
 	spheroAdaptor.Port = "/dev/rfcomm0"
