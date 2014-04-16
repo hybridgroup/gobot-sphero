@@ -4,6 +4,8 @@ Gobot (http://gobot.io/) is a library for robotics and physical computing using 
 
 This library provides an adaptor and driver for the Sphero robot from Orbotix (http://www.gosphero.com/)
 
+[![Build Status](https://travis-ci.org/hybridgroup/gobot-sphero.svg?branch=master)](https://travis-ci.org/hybridgroup/gobot-sphero) [![Coverage Status](https://coveralls.io/repos/hybridgroup/gobot-sphero/badge.png)](https://coveralls.io/r/hybridgroup/gobot-sphero)
+
 ## Getting Started
 
 Install the library with: `go get -u github.com/hybridgroup/gobot-sphero`
