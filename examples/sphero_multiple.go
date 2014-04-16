@@ -9,7 +9,6 @@ import (
 func main() {
 	master := gobot.GobotMaster()
 
-	var robots []gobot.Robot
 	spheros := []string{
 		"/dev/rfcomm0",
 		"/dev/rfcomm1",
@@ -34,14 +33,14 @@ func main() {
 			})
 
 			gobot.Every("1s", func() {
-				sphero.Roll(100, uint16(gobot.Random(0, 360)))
+				sphero.Roll(100, uint16(gobot.Rand(360)))
 			})
 			gobot.Every("3s", func() {
-				sphero.SetRGB(uint8(gobot.Random(0, 255)), uint8(gobot.Random(0, 255)), uint8(gobot.Random(0, 255)))
+				sphero.SetRGB(uint8(gobot.Rand(255)), uint8(gobot.Rand(255)), uint8(gobot.Rand(255)))
 			})
 		}
 
-		master.Robots = append(robots, *gobot.Robot{
+		master.Robots = append(master.Robots, &gobot.Robot{
 			Connections: []gobot.Connection{spheroAdaptor},
 			Devices:     []gobot.Device{sphero},
 			Work:        work,

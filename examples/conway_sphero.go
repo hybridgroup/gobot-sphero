@@ -16,7 +16,6 @@ type conway struct {
 func main() {
 	master := gobot.GobotMaster()
 
-	var robots []gobot.Robot
 	spheros := []string{
 		"/dev/rfcomm0",
 		"/dev/rfcomm1",
@@ -55,14 +54,12 @@ func main() {
 			})
 		}
 
-		robots = append(robots, *gobot.Robot{
+		master.Robots = append(master.Robots, &gobot.Robot{
 			Connections: []gobot.Connection{spheroAdaptor},
 			Devices:     []gobot.Device{sphero},
 			Work:        work,
 		})
 	}
-
-	master.Robots = robots
 
 	master.Start()
 }

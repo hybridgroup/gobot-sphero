@@ -2,40 +2,43 @@ package gobotSphero
 
 import (
 	"github.com/hybridgroup/gobot"
+	"github.com/tarm/goserial"
+	"io"
 )
 
 type SpheroAdaptor struct {
 	gobot.Adaptor
-	sp gobot.Port
+	sp io.ReadWriteCloser
 }
 
-var connect = func(sa *SpheroAdaptor) {
-	if gobot.IsUrl(sa.Adaptor.Port) {
-		sa.sp = gobot.ConnectToTcp(sa.Adaptor.Port)
-	} else {
-		sa.sp = gobot.ConnectToSerial(sa.Adaptor.Port, 115200)
+var connect = func(me *SpheroAdaptor) {
+	c := &serial.Config{Name: me.Adaptor.Port, Baud: 115200}
+	s, err := serial.OpenPort(c)
+	if err != nil {
+		panic(err)
 	}
+	me.sp = s
 }
 
-func (sa *SpheroAdaptor) Connect() bool {
-	connect(sa)
-	sa.Connected = true
+func (me *SpheroAdaptor) Connect() bool {
+	connect(me)
+	me.Connected = true
 	return true
 }
 
-func (sa *SpheroAdaptor) Reconnect() bool {
-	if sa.Connected == true {
-		sa.Disconnect()
+func (me *SpheroAdaptor) Reconnect() bool {
+	if me.Connected == true {
+		me.Disconnect()
 	}
-	return sa.Connect()
+	return me.Connect()
 }
 
-func (sa *SpheroAdaptor) Disconnect() bool {
-	sa.sp.Close()
-	sa.Connected = false
+func (me *SpheroAdaptor) Disconnect() bool {
+	me.sp.Close()
+	me.Connected = false
 	return true
 }
 
-func (sa *SpheroAdaptor) Finalize() bool {
+func (me *SpheroAdaptor) Finalize() bool {
 	return true
 }
